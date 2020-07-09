@@ -7,12 +7,12 @@ export abstract class HubService {
 
     constructor(
         private route: string,
-        private options = new HubOptions()) {
-        console.log(options)
+        private options: HubOptions) {
+        this.options = {...new HubOptions(), ...options}
         this.buildConnection();
     }
 
-    public buildConnection() {
+    protected buildConnection() {
         var builder = new signalR.HubConnectionBuilder()
             .withUrl(`${environment.backendUri}/hubs/${this.route}`, {
                 accessTokenFactory: this.options.getBearerToken
@@ -24,32 +24,40 @@ export abstract class HubService {
         this.hubConnection = builder.build();
     }
 
+    protected async connect() {
+        await this.hubConnection
+            .start();
+
+        if (this.options.tryReconnectOnError)
+            this.configureTryReconnectOnError();
+    }
+
+    protected disconnect() {
+        return this.hubConnection
+            .stop()
+    }
+
     protected tryConnect(
-        interval: number,
+        attemptNumber: number,
         onConnect: () => void = () => { },
         onError: (error: any) => void = () => { }) {
+        if (attemptNumber > this.options.maxAttemptsToConnect)
+            return;
+        attemptNumber += 1
+
         this.connect()
             .then(onConnect)
             .catch(error => {
                 onError(error)
-                setTimeout(() => this.tryConnect(interval), interval)
+                setTimeout(() => this.tryConnect(attemptNumber), this.options.tryConnectInterval)
             })
     }
-
-    protected connect() {
-        return this.hubConnection
-            .start()
-            .then(() => {
-                if (this.options.tryReconnectOnError)
-                    this.configureTryReconnectOnError();
-            })
-    }
-
+    
     private configureTryReconnectOnError() {
         this.hubConnection.onclose(error => {
-            console.log(error)
+            console.error(error)
             if (error)
-                this.tryConnect(this.options.tryReconnectInterval);
+                this.tryConnect(1);
         })
     }
 }

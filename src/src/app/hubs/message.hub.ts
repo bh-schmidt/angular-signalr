@@ -13,9 +13,13 @@ export class MessageHubService extends HubService {
             tryReconnectOnError: true,
             getBearerToken: () => this.getBearerToken()
         })
+    }
 
-        const timeToReconnect = 10 * 60
-        this.tryConnect(timeToReconnect, () => this.registerSignalEvents(), error => console.log(error))
+    public startConnection() {
+        this.tryConnect(
+            1, 
+            () => this.registerSignalEvents(), 
+            error => console.log(error))
     }
 
     private registerSignalEvents() {

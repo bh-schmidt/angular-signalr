@@ -3,6 +3,7 @@ import * as signalR from '@aspnet/signalr';
 export class HubOptions {
     logLevel?: signalR.LogLevel = signalR.LogLevel.None
     tryReconnectOnError?: boolean = false
-    tryReconnectInterval?: number = 10 * 60
+    tryConnectInterval?: number = 60 * 1000
+    maxAttemptsToConnect?: number = 30
     getBearerToken?: () => string
 }

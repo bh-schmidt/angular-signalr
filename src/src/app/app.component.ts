@@ -18,6 +18,8 @@ export class AppComponent implements OnInit {
         private mesageService: MessageService) { }
 
     ngOnInit() {
+        this.messageSignalRService.startConnection()
+
         this.messageSignalRService.messageEmmiter
             .subscribe((message: Message) => {
                 if (message)
